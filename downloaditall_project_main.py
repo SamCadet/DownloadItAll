@@ -34,7 +34,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
     def browseFiles(self):
         global filename
-        path = os.path.join('', )
+        # path = os.path.join('', )
         filename = QFileDialog.getExistingDirectory(
             self, 'Save File')
         if filename:
@@ -61,7 +61,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
     def clickDownload(self):
         self.yt = YouTube(self.URLBar.text())
-        self.streams = self.yt.streams
+        self.streams = self.yt.streams.get_highest_resolution()
         itag = self.selectVideoQualityBox.itemData(
             self.selectVideoQualityBox.currentIndex())
         self.yt.register_on_progress_callback(self.fileProgress)

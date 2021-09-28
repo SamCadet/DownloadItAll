@@ -70,7 +70,7 @@ class Ui_MainWindow(object):
         self.downloadButton.setObjectName("downloadButton")
         self.progressBar = QtWidgets.QProgressBar(self.centralwidget)
         self.progressBar.setGeometry(QtCore.QRect(50, 520, 451, 31))
-        self.progressBar.setProperty("value", 24)
+        self.progressBar.setProperty("value", 0)
         self.progressBar.setAlignment(QtCore.Qt.AlignBottom|QtCore.Qt.AlignHCenter)
         self.progressBar.setObjectName("progressBar")
         self.browseButton = QtWidgets.QPushButton(self.centralwidget)

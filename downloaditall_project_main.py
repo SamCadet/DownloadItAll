@@ -13,6 +13,7 @@ from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui
 import re
 import ffmpeg
+import subprocess
 
 # from downloaditall_project_main import browseFiles, clickDownload, provideURL, fileProgress
 
@@ -55,18 +56,18 @@ class Window(QMainWindow, Ui_MainWindow):
             pixmap.scaled(384, 216, Qt.KeepAspectRatio,
                           Qt.FastTransformation)
 
-            for stream in self.streams:
-                self.streams.filter(file_extension='mp4')
-                # self.streams.order_by('resolution')
+            for stream in self.streams.filter(file_extension='mp4', adaptive=True).order_by('resolution'):
+
                 self.selectVideoQualityBox.addItem(str(stream))
 
     def clickDownload(self):
-        selection = (self.selectVideoQualityBox.currentText())
-        itag = re.findall(r'itag="(.*?)"', selection)[0]
+        self.selection = (self.selectVideoQualityBox.currentText())
+        itag = re.findall(r'itag="(.*?)"', self.selection)[0]
         print(itag)
         # self.streams.register_on_progress_callback(self.fileProgress)
         videoFile = self.streams.get_by_itag(itag)
-        videoFile.download(output_path=f'{self.filename}')
+        videoFile.download(output_path=self.filename,
+                           filename=f'{self.YouTubeURL.title}_video.mp4')
 
         audioFile = self.streams.get_audio_only()
         audioOutput = audioFile.download(
@@ -74,28 +75,26 @@ class Window(QMainWindow, Ui_MainWindow):
 
     def combineVideoandAudio(self):
 
-        print(
-            f'Directory: {self.filename} \nFilename {self.YouTubeURL.title}.mp4, \nComplete Path: {self.filename}/{self.YouTubeURL.title}.mp4 ')
-
+        # print(
+        #     f'\nDirectory: {self.filename} \nFilename {self.YouTubeURL.title}.mp4, \nComplete Path: {self.filename}/{self.YouTubeURL.title}.mp4')
         try:
+
             videoStream = ffmpeg.input(
-                f'{self.filename}/{self.YouTubeURL.title}.mp4')
+                f'{self.YouTubeURL.title}_video.mp4')
             audioStream = ffmpeg.input(
-                f'{self.filename}/{self.YouTubeURL.title}_audio.mp4')
+                f'{self.YouTubeURL.title}_audio.mp4')
             ffmpeg.output(audioStream, videoStream,
-                          f'{self.YouTubeURL.title}1.mp4').run(capture_stdout=True, capture_stderr=True)
-        except ffmpeg._run.Error as e:
-            print("fatal error: ", file=sys.stderr)
-            print('stdout:', e.stdout)
-            print('stderr:', e.stderr)
-            raise e
+                          f'{self.YouTubeURL.title}.mp4', vcodec='copy', acodec='mp3', strict='experimental').run(capture_stdout=True, capture_stderr=True)
 
-        print('project complete')
+            print('project complete')
 
-    # def fileProgress(self, totalSize, stream=None, chunk=None, remaining=None):
-    #     fileSize = self.stream.filesize
-    #     self.progressBar.setValue(100 * (fileSize - remaining)) / fileSize
-    #     QApplication.processEvents()
+        except ffmpeg.Error as e:
+            print(e.stderr.decode('utf8'))
+
+    def fileProgress(self, stream, chunk, fileHandle, remaining):
+        size = self.stream.stream.filesize
+        progress = (float(abs(remaining - size) / size) * float(100))
+        self.progressBar.setValue(progress)
 
 
 if __name__ == '__main__':

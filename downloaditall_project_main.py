@@ -34,14 +34,6 @@ class Window(QMainWindow, Ui_MainWindow):
         self.downloadButton.clicked.connect(self.clickDownload)
         self.downloadButton.clicked.connect(self.combineVideoandAudio)
 
-    def browseFiles(self):
-
-        # path = os.path.join('', )
-        self.filename = QFileDialog.getExistingDirectory(
-            self, 'Save File')
-        if self.filename:
-            self.destinationBar.setText(str(self.filename))
-
     def provideURL(self, audio_only=False):
         self.yt = YouTube(self.URLBar.text())
         if self.yt:
@@ -60,40 +52,67 @@ class Window(QMainWindow, Ui_MainWindow):
 
                 self.selectVideoQualityBox.addItem(str(stream))
 
+    def removeReservedChars(self, youTubeURL):
+
+        reservedChars = {'<', '>', ':', '"', '/', '\\', '|', '?', '*'}
+
+        for char in youTubeURL:
+            if char in reservedChars:
+                youTubeURL = youTubeURL.replace(char, '_')
+
+        return youTubeURL
+
+    def browseFiles(self):
+
+        self.newYouTubeTitle = self.removeReservedChars(self.YouTubeURL.title)
+
+        self.filename = QFileDialog.getExistingDirectory(
+            self, 'Save File')
+        if self.filename:
+
+            self.destinationBar.setText(
+                f'{self.filename}//{self.newYouTubeTitle}')
+
     def clickDownload(self):
+
         self.selection = (self.selectVideoQualityBox.currentText())
         itag = re.findall(r'itag="(.*?)"', self.selection)[0]
-        print(itag)
-        # self.streams.register_on_progress_callback(self.fileProgress)
         videoFile = self.streams.get_by_itag(itag)
         videoFile.download(output_path=self.filename,
-                           filename=f'{self.YouTubeURL.title}_video.mp4')
+                           filename=f'{self.newYouTubeTitle}_video.mp4')
+
+        self.yt.register_on_progress_callback(self.fileProgress)
 
         audioFile = self.streams.get_audio_only()
-        audioOutput = audioFile.download(
-            output_path=self.filename, filename=f'{self.YouTubeURL.title}_audio.mp4')
+        audioFile.download(output_path=self.filename,
+                           filename=f'{self.newYouTubeTitle}_audio.mp4')
 
     def combineVideoandAudio(self):
 
         # print(
-        #     f'\nDirectory: {self.filename} \nFilename {self.YouTubeURL.title}.mp4, \nComplete Path: {self.filename}/{self.YouTubeURL.title}.mp4')
-        try:
+        #     f'\nDirectory: {self.filename} \nFilename {self.newYouTubeTitle}.mp4, \nComplete Path: {self.filename}/{self.newYouTubeTitle}.mp4')
 
-            videoStream = ffmpeg.input(
-                f'{self.YouTubeURL.title}_video.mp4')
-            audioStream = ffmpeg.input(
-                f'{self.YouTubeURL.title}_audio.mp4')
-            ffmpeg.output(audioStream, videoStream,
-                          f'{self.YouTubeURL.title}.mp4', vcodec='copy', acodec='mp3', strict='experimental').run(capture_stdout=True, capture_stderr=True)
+        # videoStream = ffmpeg.input(
+        #     f'{self.newYouTubeTitle}_video.mp4')
+        # audioStream = ffmpeg.input(
+        #     f'{self.newYouTubeTitle}_audio.mp4')
+        # ffmpeg.output(audioStream, videoStream,
+        #               f'{self.newYouTubeTitle}.mp4', vcodec='copy', acodec='mp3', strict='experimental').run(capture_stdout=True, capture_stderr=True)
 
-            print('project complete')
+        videoStream = f'{self.newYouTubeTitle}_video.mp4'
+        audioStream = f'{self.newYouTubeTitle}_audio.mp4'
+        outputFile = f'{self.newYouTubeTitle}.mp4'
+        codec = 'copy'
 
-        except ffmpeg.Error as e:
-            print(e.stderr.decode('utf8'))
+        createFile = subprocess.run(
+            f'ffmpeg -i {videoStream} -i {audioStream} -c {codec} {outputFile}')
 
-    def fileProgress(self, stream, chunk, fileHandle, remaining):
-        size = self.stream.stream.filesize
-        progress = (float(abs(remaining - size) / size) * float(100))
+        print(createFile.stdout)
+        print('project complete')
+
+    def fileProgress(self, stream, chunk, bytes_remaining):
+        size = stream.filesize
+        progress = int((abs(bytes_remaining - size) / size)) * 100
         self.progressBar.setValue(progress)
 
 

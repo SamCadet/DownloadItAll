@@ -71,7 +71,7 @@ class Window(QMainWindow, Ui_MainWindow):
         if self.filename:
 
             self.destinationBar.setText(
-                f'{self.filename}//{self.newYouTubeTitle}')
+                f'{self.filename}/{self.newYouTubeTitle}')
 
     def clickDownload(self):
 
@@ -92,23 +92,23 @@ class Window(QMainWindow, Ui_MainWindow):
         # print(
         #     f'\nDirectory: {self.filename} \nFilename {self.newYouTubeTitle}.mp4, \nComplete Path: {self.filename}/{self.newYouTubeTitle}.mp4')
 
-        # videoStream = ffmpeg.input(
-        #     f'{self.newYouTubeTitle}_video.mp4')
-        # audioStream = ffmpeg.input(
-        #     f'{self.newYouTubeTitle}_audio.mp4')
-        # ffmpeg.output(audioStream, videoStream,
-        #               f'{self.newYouTubeTitle}.mp4', vcodec='copy', acodec='mp3', strict='experimental').run(capture_stdout=True, capture_stderr=True)
-
-        videoStream = f'{self.newYouTubeTitle}_video.mp4'
-        audioStream = f'{self.newYouTubeTitle}_audio.mp4'
-        outputFile = f'{self.newYouTubeTitle}.mp4'
+        fullPathVideo = f'"{self.filename}/{self.newYouTubeTitle}_video.mp4"'
+        fullPathAudio = f'"{self.filename}/{self.newYouTubeTitle}_audio.mp4"'
+        outputFile = f'"{self.filename}/{self.newYouTubeTitle}.mp4"'
         codec = 'copy'
 
+        # videoStream = ffmpeg.input(fullPathVideo)
+        # audioStream = ffmpeg.input(fullPathAudio)
+        # ffmpeg.output(videoStream, audioStream,
+        #               outputFile, vcodec='copy').run(capture_stdout=True, capture_stderr=True)
+
         createFile = subprocess.run(
-            f'ffmpeg -i {videoStream} -i {audioStream} -c {codec} {outputFile}')
+            f'ffmpeg -i {fullPathVideo} -i {fullPathAudio} -c:v {codec} -c:a {codec} {outputFile}')
+
+        os.remove(f'{self.newYouTubeTitle}_video.mp4')
+        os.remove(f'{self.newYouTubeTitle}_audio.mp4')
 
         print(createFile.stdout)
-        print('project complete')
 
     def fileProgress(self, stream, chunk, bytes_remaining):
         size = stream.filesize

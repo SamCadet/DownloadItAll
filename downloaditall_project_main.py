@@ -21,7 +21,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.setWindowTitle('downloaditall')
         self.browseButton.clicked.connect(self.browseFiles)
-        self.videoTitle
+        self.videoTitle.setWordWrap(True)
         self.selectVideoQualityBox
         self.progressBar.setMaximum(100)
         self.URLBar
@@ -97,7 +97,7 @@ class Window(QMainWindow, Ui_MainWindow):
         #               outputFile, vcodec=codec).run(capture_stdout=True, capture_stderr=True)
 
         createFile = subprocess.run(
-            f'ffmpeg -i {fullPathVideo} -i {fullPathAudio} -c:v {codec} -c:a {codec} {outputFile}')
+            f'ffmpeg -i {fullPathVideo} -i {fullPathAudio} -c:v libx264 -preset veryfast -c:a {codec} {outputFile}')
 
         os.remove(f'{self.newYouTubeTitle}_video.mp4')
         os.remove(f'{self.newYouTubeTitle}_audio.mp4')
